@@ -1,0 +1,567 @@
+```html
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1">
+
+<title>Control PAE — Escáner QR</title>
+
+
+<script
+  src="https://unpkg.com/html5-qrcode"
+  type="text/javascript">
+</script>
+
+
+<style>
+
+body {
+
+  font-family: Arial, sans-serif;
+
+  margin: 0;
+
+  padding: 20px;
+
+  background: #f2f7f3;
+
+  text-align: center;
+
+}
+
+
+.contenedor {
+
+  max-width: 500px;
+
+  margin: auto;
+
+  background: white;
+
+  padding: 25px;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 2px 12px rgba(0,0,0,.15);
+
+}
+
+
+h1 {
+
+  margin-top: 0;
+
+}
+
+
+.subtitulo {
+
+  color: #555;
+
+}
+
+
+#lector {
+
+  width: 100%;
+
+  margin-top: 20px;
+
+}
+
+
+button {
+
+  width: 94%;
+
+  padding: 15px;
+
+  margin: 8px 0;
+
+  font-size: 18px;
+
+  border: none;
+
+  border-radius: 8px;
+
+  cursor: pointer;
+
+}
+
+
+.escanear {
+
+  background: #2e7d32;
+
+  color: white;
+
+}
+
+
+.detener {
+
+  background: #777;
+
+  color: white;
+
+}
+
+
+.manual {
+
+  background: #eeeeee;
+
+}
+
+
+input {
+
+  width: 90%;
+
+  padding: 14px;
+
+  font-size: 18px;
+
+  margin: 15px 0;
+
+  border: 1px solid #ccc;
+
+  border-radius: 8px;
+
+  box-sizing: border-box;
+
+}
+
+
+#resultado {
+
+  margin-top: 20px;
+
+  font-size: 18px;
+
+  min-height: 30px;
+
+}
+
+
+.oculto {
+
+  display: none;
+
+}
+
+
+.codigo {
+
+  font-size: 22px;
+
+  font-weight: bold;
+
+  word-break: break-word;
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="contenedor">
+
+
+<h1>CONTROL PAE</h1>
+
+
+<p class="subtitulo">
+
+Escáner de consumo
+
+</p>
+
+
+<button
+  class="escanear"
+  onclick="iniciarCamara()">
+
+📷 ESCANEAR QR
+
+</button>
+
+
+<div
+  id="lector"
+  class="oculto">
+</div>
+
+
+<button
+  id="detener"
+  class="detener oculto"
+  onclick="detenerCamara()">
+
+DETENER CÁMARA
+
+</button>
+
+
+<div id="resultado"></div>
+
+
+<hr>
+
+
+<h3>Ingreso manual</h3>
+
+
+<input
+  type="text"
+  id="codigoManual"
+  placeholder="ENSRMG-000001">
+
+
+<button
+  class="manual"
+  onclick="enviarManual()">
+
+REGISTRAR CÓDIGO
+
+</button>
+
+
+</div>
+
+
+<script>
+
+
+// ==========================================
+// DIRECCIÓN DE NUESTRO APPS SCRIPT
+// ==========================================
+
+const APP_PAE =
+"https://script.google.com/macros/s/AKfycbzaudBygQmoNVtLOvOwcXENtGWEQKdyZfqz0YnOLRzHm1RD5z_p75F4obJD7v8AkVQo/exec";
+
+
+// ==========================================
+// VARIABLES
+// ==========================================
+
+let lector = null;
+
+let camaraActiva = false;
+
+
+// ==========================================
+// INICIAR CÁMARA
+// ==========================================
+
+function iniciarCamara() {
+
+
+  document
+    .getElementById("resultado")
+    .innerHTML =
+    "Solicitando cámara...";
+
+
+  document
+    .getElementById("lector")
+    .classList
+    .remove("oculto");
+
+
+  document
+    .getElementById("detener")
+    .classList
+    .remove("oculto");
+
+
+  lector =
+    new Html5Qrcode("lector");
+
+
+  Html5Qrcode
+    .getCameras()
+
+
+    .then(function(camaras) {
+
+
+      if (
+        !camaras ||
+        camaras.length === 0
+      ) {
+
+        throw new Error(
+          "No se encontró una cámara."
+        );
+
+      }
+
+
+      let camara =
+        camaras[0];
+
+
+      // Buscar cámara trasera
+
+      for (
+        let i = 0;
+        i < camaras.length;
+        i++
+      ) {
+
+        const nombre =
+          (
+            camaras[i].label || ""
+          ).toLowerCase();
+
+
+        if (
+          nombre.includes("back") ||
+          nombre.includes("rear") ||
+          nombre.includes("trasera")
+        ) {
+
+          camara =
+            camaras[i];
+
+          break;
+
+        }
+
+      }
+
+
+      camaraActiva = true;
+
+
+      return lector.start(
+
+        camara.id,
+
+        {
+
+          fps: 10,
+
+          qrbox: {
+
+            width: 250,
+
+            height: 250
+
+          }
+
+        },
+
+
+        function(codigo) {
+
+          codigo =
+            codigo.trim();
+
+
+          detenerCamara();
+
+
+          enviarCodigo(codigo);
+
+        },
+
+
+        function(error) {
+
+          // Ignorar errores de búsqueda
+
+        }
+
+      );
+
+    })
+
+
+    .then(function() {
+
+      document
+        .getElementById("resultado")
+        .innerHTML =
+        "Apunte la cámara al código QR.";
+
+    })
+
+
+    .catch(function(error) {
+
+      camaraActiva = false;
+
+
+      document
+        .getElementById("resultado")
+        .innerHTML =
+
+        "<strong>⚠️ No se pudo abrir la cámara.</strong>" +
+        "<br><br>" +
+
+        error.message;
+
+
+      document
+        .getElementById("lector")
+        .classList
+        .add("oculto");
+
+
+      document
+        .getElementById("detener")
+        .classList
+        .add("oculto");
+
+    });
+
+}
+
+
+// ==========================================
+// DETENER CÁMARA
+// ==========================================
+
+function detenerCamara() {
+
+
+  if (
+    !lector ||
+    !camaraActiva
+  ) {
+
+    return;
+
+  }
+
+
+  lector
+    .stop()
+
+
+    .then(function() {
+
+      lector.clear();
+
+      camaraActiva = false;
+
+
+      document
+        .getElementById("lector")
+        .classList
+        .add("oculto");
+
+
+      document
+        .getElementById("detener")
+        .classList
+        .add("oculto");
+
+    })
+
+
+    .catch(function(error) {
+
+      console.log(error);
+
+      camaraActiva = false;
+
+    });
+
+}
+
+
+// ==========================================
+// ENVIAR CÓDIGO ESCANEADO
+// ==========================================
+
+function enviarCodigo(codigo) {
+
+
+  if (!codigo) {
+
+    return;
+
+  }
+
+
+  document
+    .getElementById("resultado")
+    .innerHTML =
+
+    "<strong>Código leído:</strong>" +
+    "<br><br>" +
+
+    "<span class='codigo'>" +
+    codigo +
+    "</span>" +
+    "<br><br>" +
+
+    "Registrando consumo...";
+
+
+  const destino =
+    APP_PAE +
+    "?codigo=" +
+    encodeURIComponent(codigo);
+
+
+  // Enviamos el código a Apps Script
+
+  window.location.href =
+    destino;
+
+}
+
+
+// ==========================================
+// INGRESO MANUAL
+// ==========================================
+
+function enviarManual() {
+
+
+  const codigo =
+    document
+      .getElementById("codigoManual")
+      .value
+      .trim();
+
+
+  if (!codigo) {
+
+    document
+      .getElementById("resultado")
+      .innerHTML =
+      "Ingrese un código.";
+
+    return;
+
+  }
+
+
+  enviarCodigo(codigo);
+
+}
+
+</script>
+
+
+</body>
+
+</html>
+```
