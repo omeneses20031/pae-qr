@@ -767,76 +767,68 @@
 
   function registrarCodigo(codigo) {
 
-    const resultado =
-      document.getElementById(
-        "resultado"
-      );
+  const resultado =
+    document.getElementById("resultado");
 
 
-    resultado.innerHTML =
-      "Procesando código...";
+  resultado.innerHTML =
+    "Procesando código...";
 
 
-    llamarApi(
-      "registrar",
-      {
-        token: token,
-        codigo: codigo
-      },
-      function(respuesta) {
+  llamarApi(
+    "registrarAsistencia",
+    {
+      token: token,
+      codigoQR: codigo,
+      consumo: "SI",
+      observacion: ""
+    },
+    function(respuesta) {
 
-        if (!respuesta.ok) {
-
-          resultado.innerHTML =
-            "<div class='error'>" +
-            "⚠ " +
-            respuesta.mensaje +
-            "</div>";
-
-          return;
-
-        }
-
-
-        const estudiante =
-          respuesta.resultado;
-
+      if (!respuesta.ok) {
 
         resultado.innerHTML =
-          "<div class='exito'>" +
-
-          "✓ CONSUMO REGISTRADO" +
-
-          "<br><br>" +
-
-          "<strong>" +
-          estudiante.estudiante +
-          "</strong>" +
-
-          "<br>" +
-
-          "Grado: " +
-          estudiante.grado +
-
-          " — Grupo: " +
-          estudiante.grupo +
-
+          "<div class='error'>" +
+          "⚠ " +
+          respuesta.mensaje +
           "</div>";
 
-
-        /*
-          Después de registrar,
-          la cámara continúa activa.
-
-          El operador puede escanear
-          inmediatamente al siguiente estudiante.
-        */
+        return;
 
       }
-    );
 
-  }
 
+      resultado.innerHTML =
+        "<div class='exito'>" +
+
+        "✓ CONSUMO REGISTRADO" +
+
+        "<br><br>" +
+
+        "<strong>" +
+        respuesta.estudiante +
+        "</strong>" +
+
+        "<br>" +
+
+        "Grado: " +
+        respuesta.grado +
+
+        " — Grupo: " +
+        respuesta.grupo +
+
+        "</div>";
+
+
+      /*
+        Después de registrar,
+        la cámara continúa activa.
+      */
+
+    }
+  );
+
+}
 
   /* =====================================================
      REGISTRO MANUAL
