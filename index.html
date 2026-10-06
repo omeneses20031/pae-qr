@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-
   <meta charset="UTF-8">
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1"
+    content="width=device-width, initial-scale=1.0"
   >
 
   <title>Control PAE - ENSRMG</title>
@@ -15,7 +13,6 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
-
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -26,7 +23,7 @@
 
     .contenedor {
       max-width: 500px;
-      margin: auto;
+      margin: 20px auto;
       background: white;
       padding: 25px;
       border-radius: 15px;
@@ -34,17 +31,23 @@
     }
 
     h1 {
-      margin-top: 0;
       color: #1b5e20;
+      margin-top: 0;
     }
 
     h2 {
       font-size: 20px;
+      line-height: 1.4;
     }
 
-    #lector {
-      width: 100%;
-      margin: 20px auto;
+    input {
+      width: 94%;
+      box-sizing: border-box;
+      padding: 14px;
+      font-size: 18px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
     }
 
     button {
@@ -57,197 +60,903 @@
       cursor: pointer;
       background: #2e7d32;
       color: white;
-    }
-
-    button:hover {
-      background: #256628;
-    }
-
-    .secundario {
-      background: #555;
-    }
-
-    input {
-      width: 94%;
-      box-sizing: border-box;
-      padding: 14px;
-      font-size: 18px;
-      margin: 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-
-    #resultado {
-      margin-top: 20px;
-      font-size: 18px;
       font-weight: bold;
     }
 
-    .separador {
-      margin: 25px 0;
-      border-top: 1px solid #ddd;
+    button:disabled {
+      background: #999;
     }
 
-  </style>
+    .rojo {
+      background: #b71c1c;
+    }
 
+    .azul {
+      background: #1565c0;
+    }
+
+    .error {
+      color: #b71c1c;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    .exito {
+      color: #1b5e20;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    .oculto {
+      display: none;
+    }
+
+    .usuario {
+      background: #e8f5e9;
+      padding: 12px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+
+    #lector {
+      width: 100%;
+      margin: 15px auto;
+    }
+
+    .estado {
+      padding: 12px;
+      border-radius: 8px;
+      background: #eeeeee;
+      margin: 10px 0;
+      font-weight: bold;
+    }
+
+    .resultado {
+      min-height: 50px;
+      margin: 15px 0;
+    }
+
+    .separador {
+      margin: 25px 0 15px 0;
+      border-top: 1px solid #ddd;
+      padding-top: 20px;
+    }
+
+    .pequeno {
+      font-size: 14px;
+      color: #666;
+    }
+  </style>
 </head>
 
 <body>
 
-  <div class="contenedor">
+  <!-- ========================= -->
+  <!-- PANTALLA DE LOGIN -->
+  <!-- ========================= -->
+
+  <div
+    class="contenedor"
+    id="login"
+  >
 
     <h1>CONTROL PAE</h1>
 
-    <h2>Escuela Normal Superior<br>
-    Rafael María Giraldo</h2>
+    <h2>
+      Escuela Normal Superior<br>
+      Rafael María Giraldo
+    </h2>
 
-    <button onclick="iniciarEscaner()">
-      📷 ESCANEAR CÓDIGO QR
-    </button>
-
-    <div id="lector"></div>
-
-    <div id="resultado"></div>
-
-    <div class="separador"></div>
-
-    <h2>Registro manual</h2>
+    <p>
+      <strong>Ingreso autorizado</strong>
+    </p>
 
     <input
       type="text"
-      id="codigoManual"
-      placeholder="Ejemplo: ENSRMG-000001"
-      autocomplete="off"
+      id="usuario"
+      placeholder="Usuario"
+      autocomplete="username"
     >
 
-    <button onclick="registroManual()">
-      Registrar código manual
+    <input
+      type="password"
+      id="contrasena"
+      placeholder="Contraseña"
+      autocomplete="current-password"
+    >
+
+    <button onclick="ingresar()">
+      INGRESAR
+    </button>
+
+    <div id="mensajeLogin"></div>
+
+  </div>
+
+
+  <!-- ========================= -->
+  <!-- SISTEMA -->
+  <!-- ========================= -->
+
+  <div
+    class="contenedor oculto"
+    id="sistema"
+  >
+
+    <h1>CONTROL PAE</h1>
+
+    <h2>
+      Escuela Normal Superior<br>
+      Rafael María Giraldo
+    </h2>
+
+    <div class="usuario">
+      Usuario:
+      <strong id="nombreUsuario"></strong>
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- LECTOR QR -->
+    <!-- ========================= -->
+
+    <h2>Escanear código QR</h2>
+
+    <div
+      id="estadoCamara"
+      class="estado"
+    >
+      Cámara detenida
+    </div>
+
+    <div id="lector"></div>
+
+    <button
+      id="botonCamara"
+      class="azul"
+      onclick="iniciarCamara()"
+    >
+      📷 ACTIVAR CÁMARA
+    </button>
+
+
+    <!-- ========================= -->
+    <!-- RESULTADO -->
+    <!-- ========================= -->
+
+    <div
+      id="resultado"
+      class="resultado"
+    ></div>
+
+
+    <!-- ========================= -->
+    <!-- REGISTRO MANUAL -->
+    <!-- ========================= -->
+
+    <div class="separador">
+
+      <h2>Registro manual</h2>
+
+      <p class="pequeno">
+        Utilice esta opción si no es posible leer el código QR.
+      </p>
+
+      <input
+        type="text"
+        id="codigoManual"
+        placeholder="Ejemplo: ENSRMG-000001"
+        autocomplete="off"
+      >
+
+      <button onclick="registrarManual()">
+        REGISTRAR CONSUMO
+      </button>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- CERRAR SESIÓN -->
+    <!-- ========================= -->
+
+    <button
+      class="rojo"
+      onclick="cerrarSesion()"
+    >
+      CERRAR SESIÓN
     </button>
 
   </div>
 
 
-  <script>
+<script>
 
-    const URL_PAE =
-      "https://script.google.com/macros/s/AKfycbzaudBygQmoNVtLOvOwcXENtGWEQKdyZfqz0YnOLRzHm1RD5z_p75F4obJD7v8AkVQo/exec";
+  /* =====================================================
+     CONFIGURACIÓN
+     ===================================================== */
 
-    let escaner = null;
+  const URL_PAE =
+    "https://script.google.com/macros/s/AKfycbzaudBygQmoNVtLOvOwcXENtGWEQKdyZfqz0YnOLRzHm1RD5z_p75F4obJD7v8AkVQo/exec";
 
 
-    function iniciarEscaner() {
+  let token = null;
 
-      document.getElementById("resultado").innerHTML =
-        "Solicitando acceso a la cámara...";
+  let nombreUsuario = "";
 
-      escaner = new Html5Qrcode("lector");
+  let lectorQR = null;
 
-      escaner.start(
+  let camaraActiva = false;
 
-        { facingMode: "environment" },
+  let ultimoCodigo = "";
 
-        {
-          fps: 10,
-          qrbox: {
-            width: 250,
-            height: 250
+  let ultimoMomento = 0;
+
+
+  /* =====================================================
+     AL CARGAR LA PÁGINA
+     ===================================================== */
+
+  window.onload = function() {
+
+    const tokenGuardado =
+      sessionStorage.getItem("PAE_TOKEN");
+
+    const nombreGuardado =
+      sessionStorage.getItem("PAE_NOMBRE");
+
+    const usuarioGuardado =
+      sessionStorage.getItem("PAE_USUARIO");
+
+
+    if (
+      tokenGuardado &&
+      nombreGuardado &&
+      usuarioGuardado
+    ) {
+
+      token = tokenGuardado;
+
+      nombreUsuario = nombreGuardado;
+
+      validarSesion();
+
+    }
+
+  };
+
+
+  /* =====================================================
+     LLAMADA JSONP AL SERVIDOR
+     ===================================================== */
+
+  function llamarApi(
+    accion,
+    parametros,
+    callback
+  ) {
+
+    const nombreCallback =
+      "paeCallback_" +
+      Date.now() +
+      "_" +
+      Math.floor(
+        Math.random() * 100000
+      );
+
+
+    const script =
+      document.createElement("script");
+
+
+    window[nombreCallback] =
+      function(respuesta) {
+
+        try {
+
+          callback(respuesta);
+
+        } finally {
+
+          delete window[nombreCallback];
+
+          if (script.parentNode) {
+            script.parentNode.removeChild(script);
           }
-        },
-
-        function(codigo) {
-
-          codigo = String(codigo).trim();
-
-          if (!codigo) {
-            return;
-          }
-
-          detenerEscaner();
-
-          document.getElementById("resultado").innerHTML =
-            "Código leído:<br>" +
-            codigo +
-            "<br><br>Registrando...";
-
-          enviarCodigo(codigo);
-
-        },
-
-        function(error) {
-
-          // No mostramos los errores normales
-          // que aparecen mientras busca el QR.
 
         }
 
-      ).catch(function(error) {
+      };
 
-        document.getElementById("resultado").innerHTML =
-          "<strong>No se pudo abrir la cámara.</strong><br><br>" +
-          error;
+
+    let url =
+      URL_PAE +
+      "?action=" +
+      encodeURIComponent(accion) +
+      "&callback=" +
+      encodeURIComponent(nombreCallback);
+
+
+    Object.keys(parametros).forEach(
+      function(clave) {
+
+        url +=
+          "&" +
+          encodeURIComponent(clave) +
+          "=" +
+          encodeURIComponent(
+            parametros[clave]
+          );
+
+      }
+    );
+
+
+    script.src = url;
+
+
+    script.onerror = function() {
+
+      callback({
+        ok: false,
+        error:
+          "No fue posible conectar con el servidor central."
+      });
+
+      delete window[nombreCallback];
+
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+
+    };
+
+
+    document.body.appendChild(script);
+
+  }
+
+
+  /* =====================================================
+     INGRESO
+     ===================================================== */
+
+  function ingresar() {
+
+    const usuario =
+      document
+        .getElementById("usuario")
+        .value
+        .trim();
+
+
+    const contrasena =
+      document
+        .getElementById("contrasena")
+        .value;
+
+
+    const mensaje =
+      document.getElementById(
+        "mensajeLogin"
+      );
+
+
+    if (!usuario || !contrasena) {
+
+      mensaje.innerHTML =
+        "<div class='error'>" +
+        "Ingrese usuario y contraseña." +
+        "</div>";
+
+      return;
+
+    }
+
+
+    mensaje.innerHTML =
+      "Verificando...";
+
+
+    llamarApi(
+      "login",
+      {
+        usuario: usuario,
+        contrasena: contrasena
+      },
+      function(respuesta) {
+
+        if (!respuesta.ok) {
+
+          mensaje.innerHTML =
+            "<div class='error'>" +
+            respuesta.error +
+            "</div>";
+
+          return;
+
+        }
+
+
+        token =
+          respuesta.token;
+
+
+        nombreUsuario =
+          respuesta.nombre;
+
+
+        sessionStorage.setItem(
+          "PAE_TOKEN",
+          respuesta.token
+        );
+
+
+        sessionStorage.setItem(
+          "PAE_USUARIO",
+          respuesta.usuario
+        );
+
+
+        sessionStorage.setItem(
+          "PAE_NOMBRE",
+          respuesta.nombre
+        );
+
+
+        mostrarSistema();
+
+
+        document
+          .getElementById("contrasena")
+          .value = "";
+
+      }
+    );
+
+  }
+
+
+  /* =====================================================
+     VALIDAR SESIÓN
+     ===================================================== */
+
+  function validarSesion() {
+
+    llamarApi(
+      "validar",
+      {
+        token: token
+      },
+      function(respuesta) {
+
+        if (!respuesta.ok) {
+
+          cerrarSesion();
+
+          return;
+
+        }
+
+
+        nombreUsuario =
+          respuesta.nombre;
+
+
+        document
+          .getElementById(
+            "nombreUsuario"
+          )
+          .textContent =
+          respuesta.nombre;
+
+
+        mostrarSistema();
+
+      }
+    );
+
+  }
+
+
+  /* =====================================================
+     MOSTRAR SISTEMA
+     ===================================================== */
+
+  function mostrarSistema() {
+
+    document
+      .getElementById("login")
+      .classList.add("oculto");
+
+
+    document
+      .getElementById("sistema")
+      .classList.remove("oculto");
+
+
+    document
+      .getElementById(
+        "nombreUsuario"
+      )
+      .textContent =
+      nombreUsuario;
+
+
+    document
+      .getElementById(
+        "codigoManual"
+      )
+      .focus();
+
+  }
+
+
+  /* =====================================================
+     ACTIVAR CÁMARA
+     ===================================================== */
+
+  function iniciarCamara() {
+
+    if (camaraActiva) {
+      return;
+    }
+
+
+    const estado =
+      document.getElementById(
+        "estadoCamara"
+      );
+
+
+    estado.textContent =
+      "Activando cámara...";
+
+
+    if (!lectorQR) {
+
+      lectorQR =
+        new Html5Qrcode(
+          "lector"
+        );
+
+    }
+
+
+    const configuracion = {
+
+      fps: 10,
+
+      qrbox: {
+        width: 250,
+        height: 250
+      }
+
+    };
+
+
+    lectorQR
+      .start(
+        {
+          facingMode: "environment"
+        },
+        configuracion,
+        function(codigo) {
+
+          procesarCodigoQR(codigo);
+
+        },
+        function(error) {
+
+          /*
+
+          No mostramos los errores normales
+          de lectura para no llenar la pantalla.
+
+          */
+
+        }
+      )
+      .then(function() {
+
+        camaraActiva = true;
+
+        estado.textContent =
+          "📷 Cámara activa — lista para escanear";
+
+        document
+          .getElementById(
+            "botonCamara"
+          )
+          .textContent =
+          "📷 CÁMARA ACTIVA";
+
+        document
+          .getElementById(
+            "botonCamara"
+          )
+          .disabled = true;
+
+      })
+      .catch(function(error) {
+
+        camaraActiva = false;
+
+        estado.innerHTML =
+          "<span class='error'>" +
+          "No fue posible abrir la cámara.<br><br>" +
+          "Verifique que el navegador tenga permiso para usar la cámara." +
+          "</span>";
 
       });
 
+  }
+
+
+  /* =====================================================
+     PROCESAR QR
+     ===================================================== */
+
+  function procesarCodigoQR(codigo) {
+
+    codigo =
+      String(codigo)
+        .trim();
+
+
+    if (!codigo) {
+      return;
     }
 
 
-    function detenerEscaner() {
+    const ahora =
+      Date.now();
 
-      if (escaner) {
 
-        escaner.stop()
-          .then(function() {
+    /*
+      Evita registrar varias veces
+      el mismo QR mientras permanece
+      frente a la cámara.
+    */
 
-            escaner.clear();
+    if (
+      codigo === ultimoCodigo &&
+      ahora - ultimoMomento < 2000
+    ) {
 
-          })
-          .catch(function() {
+      return;
 
-          });
+    }
+
+
+    ultimoCodigo =
+      codigo;
+
+    ultimoMomento =
+      ahora;
+
+
+    registrarCodigo(codigo);
+
+  }
+
+
+  /* =====================================================
+     REGISTRAR CÓDIGO
+     ===================================================== */
+
+  function registrarCodigo(codigo) {
+
+    const resultado =
+      document.getElementById(
+        "resultado"
+      );
+
+
+    resultado.innerHTML =
+      "Procesando código...";
+
+
+    llamarApi(
+      "registrar",
+      {
+        token: token,
+        codigo: codigo
+      },
+      function(respuesta) {
+
+        if (!respuesta.ok) {
+
+          resultado.innerHTML =
+            "<div class='error'>" +
+            "⚠ " +
+            respuesta.error +
+            "</div>";
+
+          return;
+
+        }
+
+
+        const estudiante =
+          respuesta.resultado;
+
+
+        resultado.innerHTML =
+          "<div class='exito'>" +
+
+          "✓ CONSUMO REGISTRADO" +
+
+          "<br><br>" +
+
+          "<strong>" +
+          estudiante.estudiante +
+          "</strong>" +
+
+          "<br>" +
+
+          "Grado: " +
+          estudiante.grado +
+
+          " — Grupo: " +
+          estudiante.grupo +
+
+          "</div>";
+
+
+        /*
+          Después de registrar,
+          la cámara continúa activa.
+
+          El operador puede escanear
+          inmediatamente al siguiente estudiante.
+        */
 
       }
+    );
+
+  }
+
+
+  /* =====================================================
+     REGISTRO MANUAL
+     ===================================================== */
+
+  function registrarManual() {
+
+    const campo =
+      document.getElementById(
+        "codigoManual"
+      );
+
+
+    const codigo =
+      campo.value.trim();
+
+
+    if (!codigo) {
+
+      document.getElementById(
+        "resultado"
+      ).innerHTML =
+        "<div class='error'>" +
+        "Ingrese un código." +
+        "</div>";
+
+      return;
 
     }
 
 
-    function enviarCodigo(codigo) {
-
-      const url =
-        URL_PAE +
-        "?codigo=" +
-        encodeURIComponent(codigo);
-
-      window.location.href = url;
-
-    }
+    registrarCodigo(codigo);
 
 
-    function registroManual() {
+    campo.value = "";
 
-      const codigo =
-        document
-          .getElementById("codigoManual")
-          .value
-          .trim();
 
-      if (!codigo) {
+    setTimeout(
+      function() {
 
-        document.getElementById("resultado").innerHTML =
-          "Ingrese un código.";
+        campo.focus();
 
-        return;
+      },
+      300
+    );
 
-      }
+  }
 
-      document.getElementById("resultado").innerHTML =
-        "Registrando...";
 
-      enviarCodigo(codigo);
+  /* =====================================================
+     CERRAR SESIÓN
+     ===================================================== */
+
+  function cerrarSesion() {
+
+    if (lectorQR && camaraActiva) {
+
+      lectorQR
+        .stop()
+        .catch(function() {});
 
     }
 
-  </script>
+
+    lectorQR = null;
+
+    camaraActiva = false;
+
+    token = null;
+
+    nombreUsuario = "";
+
+
+    sessionStorage.removeItem(
+      "PAE_TOKEN"
+    );
+
+    sessionStorage.removeItem(
+      "PAE_USUARIO"
+    );
+
+    sessionStorage.removeItem(
+      "PAE_NOMBRE"
+    );
+
+
+    document
+      .getElementById("sistema")
+      .classList.add("oculto");
+
+
+    document
+      .getElementById("login")
+      .classList.remove("oculto");
+
+
+    document
+      .getElementById("usuario")
+      .value = "";
+
+
+    document
+      .getElementById("contrasena")
+      .value = "";
+
+
+    document
+      .getElementById("codigoManual")
+      .value = "";
+
+
+    document
+      .getElementById("resultado")
+      .innerHTML = "";
+
+
+    document
+      .getElementById("mensajeLogin")
+      .innerHTML = "";
+
+
+    document
+      .getElementById("estadoCamara")
+      .textContent =
+      "Cámara detenida";
+
+
+    document
+      .getElementById("botonCamara")
+      .textContent =
+      "📷 ACTIVAR CÁMARA";
+
+
+    document
+      .getElementById("botonCamara")
+      .disabled = false;
+
+  }
+
+</script>
 
 </body>
-
 </html>
