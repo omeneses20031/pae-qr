@@ -597,49 +597,76 @@
 
   function iniciarCamara() {
 
-    if (camaraActiva) {
-      return;
-    }
+  if (camaraActiva) {
+    return;
+  }
 
+  const estado =
+    document.getElementById("estadoCamara");
 
-    const estado =
-      document.getElementById(
-        "estadoCamara"
-      );
+  estado.textContent =
+    "Buscando cámara...";
 
+  if (!lectorQR) {
+    lectorQR =
+      new Html5Qrcode("lector");
+  }
 
-    estado.textContent =
-      "Activando cámara...";
+  Html5Qrcode
+    .getCameras()
+    .then(function(camaras) {
 
+      if (!camaras || camaras.length === 0) {
 
-    if (!lectorQR) {
-
-      lectorQR =
-        new Html5Qrcode(
-          "lector"
+        throw new Error(
+          "No se encontró ninguna cámara disponible."
         );
 
-    }
-
-
-    const configuracion = {
-
-      fps: 10,
-
-      qrbox: {
-        width: 250,
-        height: 250
       }
 
-    };
+      /*
+        Buscamos preferiblemente
+        la cámara trasera.
+      */
 
+      let camaraSeleccionada =
+        camaras[0];
 
-    lectorQR
-      .start(
+      for (let i = 0; i < camaras.length; i++) {
+
+        const nombre =
+          String(
+            camaras[i].label || ""
+          ).toLowerCase();
+
+        if (
+          nombre.includes("back") ||
+          nombre.includes("rear") ||
+          nombre.includes("trasera") ||
+          nombre.includes("posterior")
+        ) {
+
+          camaraSeleccionada =
+            camaras[i];
+
+          break;
+
+        }
+
+      }
+
+      estado.textContent =
+        "Activando cámara...";
+
+      return lectorQR.start(
+        camaraSeleccionada.id,
         {
-          facingMode: "environment"
+          fps: 10,
+          qrbox: {
+            width: 250,
+            height: 250
+          }
         },
-        configuracion,
         function(codigo) {
 
           procesarCodigoQR(codigo);
@@ -648,50 +675,44 @@
         function(error) {
 
           /*
-
-          No mostramos los errores normales
-          de lectura para no llenar la pantalla.
-
+            Errores normales de lectura:
+            no mostramos nada.
           */
 
         }
-      )
-      .then(function() {
+      );
 
-        camaraActiva = true;
+    })
+    .then(function() {
 
-        estado.textContent =
-          "📷 Cámara activa — lista para escanear";
+      camaraActiva = true;
 
-        document
-          .getElementById(
-            "botonCamara"
-          )
-          .textContent =
-          "📷 CÁMARA ACTIVA";
+      estado.textContent =
+        "📷 Cámara activa — lista para escanear";
 
-        document
-          .getElementById(
-            "botonCamara"
-          )
-          .disabled = true;
+      document
+        .getElementById("botonCamara")
+        .textContent =
+        "📷 CÁMARA ACTIVA";
 
-      })
-      .catch(function(error) {
+      document
+        .getElementById("botonCamara")
+        .disabled = true;
 
-        camaraActiva = false;
+    })
+    .catch(function(error) {
 
-        estado.innerHTML =
-          "<span class='error'>" +
-          "No fue posible abrir la cámara.<br><br>" +
-          "Verifique que el navegador tenga permiso para usar la cámara." +
-          "</span>";
+      camaraActiva = false;
 
-      });
+      estado.innerHTML =
+        "<span class='error'>" +
+        "No fue posible abrir la cámara.<br><br>" +
+        error.message +
+        "</span>";
 
-  }
+    });
 
-
+}
   /* =====================================================
      PROCESAR QR
      ===================================================== */
