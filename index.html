@@ -700,17 +700,17 @@
         .disabled = true;
 
     })
-    .catch(function(error) {
+.catch(function(error) {
 
-      camaraActiva = false;
+  camaraActiva = false;
 
-      estado.innerHTML =
-        "<span class='error'>" +
-        "No fue posible abrir la cámara.<br><br>" +
-        error.message +
-        "</span>";
+  estado.innerHTML =
+    "<span class='error'>" +
+    "ERROR REAL DE CÁMARA:<br><br>" +
+    String(error) +
+    "</span>";
 
-    });
+});
 
 }
   /* =====================================================
